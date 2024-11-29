@@ -10,16 +10,16 @@
   },
   "permissions": [
     "downloads",
-    "activeTab",
-    "storage",
+    "tabs",
     "contextMenus",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>",
     "https://api.x.ai/*",
     "*://127.0.0.1/*",
-    "*://localhost/*"
+    "*://localhost/*",
+    "http://127.0.0.1:1224/*"
   ],
   "content_scripts": [
     {
@@ -34,5 +34,6 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "options_page": "options.html"
 } 
