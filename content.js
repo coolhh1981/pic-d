@@ -2,9 +2,16 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('收到消息:', request.action);
   if (request.action === "startScreenshotMode") {
+    isOCRMode = false;
     startScreenshotMode();
-  } else if (request.action === "startOCRMode") {
-    startOCRMode();
+  } else if (request.action === "startOnlineOCRMode") {
+    isOCRMode = true;
+    useLocalOCR = false;
+    startScreenshotMode();
+  } else if (request.action === "startLocalOCRMode") {
+    isOCRMode = true;
+    useLocalOCR = true;
+    startScreenshotMode();
   } else if (request.action === "processScreenshot") {
     console.log('开始处理截图，区域信息:', request.area);
     processScreenshot(request.imageData, request.area);
@@ -49,8 +56,9 @@ let startX = 0;
 let startY = 0;
 let isSelecting = false;
 
-// 添加OCR模式标志
+// 添加OCR模式标志和本地OCR标志
 let isOCRMode = false;
+let useLocalOCR = false;
 
 // 在文件开头添加一个变量来跟踪当前的canvas元素
 let currentCanvas = null;
@@ -101,17 +109,17 @@ function startScreenshotMode() {
   tooltip.style.display = 'none';
   document.body.style.cursor = 'crosshair';
 
+  // 创建遮罩层
+  const overlay = document.createElement('div');
+  overlay.className = 'screenshot-overlay';
+  document.body.appendChild(overlay);
+
   // 确保选择框存在
   if (!document.querySelector('.selection-box')) {
     const selectionBox = document.createElement('div');
     selectionBox.className = 'selection-box';
     document.body.appendChild(selectionBox);
   }
-
-  // 创建遮罩层
-  const overlay = document.createElement('div');
-  overlay.className = 'screenshot-overlay';
-  document.body.appendChild(overlay);
 }
 
 // 修改processScreenshot函数
@@ -165,10 +173,11 @@ function processScreenshot(imageData, area) {
 
     // 如果是OCR模式，发送OCR请求
     if (area.isOCR) {
-      console.log('发送OCR请求');
+      console.log('发送OCR请求，使用本地服务:', useLocalOCR);
       chrome.runtime.sendMessage({
         action: 'processOCR',
-        imageData: croppedImageData
+        imageData: croppedImageData,
+        useLocalOCR: useLocalOCR
       }, response => {
         console.log('收到OCR请求的响应:', response);
       });
@@ -280,19 +289,14 @@ function updateSelectionBox(e) {
   const left = Math.min(currentX, startX);
   const top = Math.min(currentY, startY);
   
-  // 获取或创建选择框
-  let selectionBox = document.querySelector('.selection-box');
-  if (!selectionBox) {
-    selectionBox = document.createElement('div');
-    selectionBox.className = 'selection-box';
-    document.body.appendChild(selectionBox);
+  const selectionBox = document.querySelector('.selection-box');
+  if (selectionBox) {
+    selectionBox.style.left = left + 'px';
+    selectionBox.style.top = top + 'px';
+    selectionBox.style.width = width + 'px';
+    selectionBox.style.height = height + 'px';
+    selectionBox.style.display = 'block';
   }
-  
-  selectionBox.style.left = left + 'px';
-  selectionBox.style.top = top + 'px';
-  selectionBox.style.width = width + 'px';
-  selectionBox.style.height = height + 'px';
-  selectionBox.style.display = 'block';
 }
 
 // 添加截图相关事件监听

@@ -17,7 +17,9 @@
   ],
   "host_permissions": [
     "<all_urls>",
-    "https://api.x.ai/*"
+    "https://api.x.ai/*",
+    "*://127.0.0.1/*",
+    "*://localhost/*"
   ],
   "content_scripts": [
     {
